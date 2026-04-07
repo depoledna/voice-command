@@ -8,14 +8,23 @@ All inference runs locally — Whisper for ASR, Silero for VAD, Qwen for tech-te
 
 - macOS with Apple Silicon
 - Python 3.12+
-- [uv](https://docs.astral.sh/uv/)
 - Microphone access (System Settings > Privacy > Microphone)
 - Accessibility access for `--type` mode (System Settings > Privacy > Accessibility)
 
 ## Install
 
+### From PyPI
+
 ```bash
-git clone https://github.com/BruhTheMomentum/voice-command.git
+pip install voice-command
+# or
+uv tool install voice-command
+```
+
+### From source
+
+```bash
+git clone https://github.com/depoledna/voice-command.git
 cd voice-command
 uv sync
 ```
@@ -26,20 +35,22 @@ Models download automatically on first run (~300MB for Whisper + ~1GB for Qwen).
 
 ```bash
 # Terminal buffer mode (TUI)
-uv run python voice_cmd.py
+voice-cmd
 
 # Type directly into the focused app
-uv run python voice_cmd.py --type
+voice-cmd --type
 
 # Transcribe a recording
-uv run python voice_cmd.py --file recording.m4a
+voice-cmd --file recording.m4a
 
 # List audio devices
-uv run python voice_cmd.py --list-devices
+voice-cmd --list-devices
 
 # Use a specific device
-uv run python voice_cmd.py --device 1
+voice-cmd --device 1
 ```
+
+When running from source, use `uv run python voice_cmd.py` instead of `voice-cmd`.
 
 ## Voice Commands
 
@@ -82,6 +93,26 @@ uv run python tests/benchmark.py
 # Pipeline diagnostics
 uv run python tests/diagnose_pipeline.py
 ```
+
+## Releasing
+
+1. Update the version in `pyproject.toml`
+2. Commit: `git commit -am "chore: bump version to X.Y.Z"`
+3. Tag: `git tag vX.Y.Z`
+4. Push: `git push origin main --tags`
+
+The GitHub Actions workflow builds and publishes to PyPI automatically via trusted publishers (OIDC).
+
+### First-time PyPI setup
+
+1. Go to https://pypi.org/manage/account/publishing/
+2. Add a "pending publisher":
+   - Package name: `voice-command`
+   - Owner: `depoledna`
+   - Repository: `voice-command`
+   - Workflow: `release.yml`
+   - Environment: `pypi`
+3. In the GitHub repo, go to Settings > Environments > create `pypi`
 
 ## License
 

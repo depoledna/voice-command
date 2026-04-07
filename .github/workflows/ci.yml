@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: ">=0.7"
+
+      - name: Build
+        run: uv build
+
+      - name: Verify wheel metadata
+        run: |
+          uv run --isolated --no-project \
+            --with dist/*.whl \
+            python -c "
+          from importlib.metadata import metadata
+          m = metadata('voice-command')
+          print(f'{m[\"Name\"]} {m[\"Version\"]}')
+          "
