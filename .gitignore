@@ -1,0 +1,24 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+
+# Test fixtures (large audio files)
+tests/fixtures/*.m4a
+tests/fixtures/*.wav
+tests/fixtures/*.mp3
+
+# IDE
+.vscode/
+.idea/
+
+# Models (downloaded at runtime)
+*.bin
+*.safetensors

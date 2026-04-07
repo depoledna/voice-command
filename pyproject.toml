@@ -1,0 +1,25 @@
+[project]
+name = "voice-command"
+version = "0.1.0"
+description = "VAD-driven streaming voice dictation for macOS with editing commands, tech-term correction, and keyboard output"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "faster-whisper>=1.2.1",
+    "jiwer>=4.0.0",
+    "librosa>=0.11.0",
+    "mlx-lm>=0.30.7",
+    "mlx-whisper>=0.4.3",
+    "noisereduce>=3.0.3",
+    "psutil>=7.2.2",
+    "pydantic>=2.12.5",
+    "pydub>=0.25.1",
+    "pynput>=1.8.1",
+    "scipy>=1.17.1",
+    "silero-vad-lite>=0.2.1",
+    "sounddevice>=0.5.5",
+    "transformers>=5.2.0",
+]
+
+[project.scripts]
+voice-cmd = "voice_cmd:main"
