@@ -1,5 +1,11 @@
 # voice-command
 
+[![PyPI](https://img.shields.io/pypi/v/voice-command)](https://pypi.org/project/voice-command/)
+[![CI](https://github.com/depoledna/voice-command/actions/workflows/ci.yml/badge.svg)](https://github.com/depoledna/voice-command/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-3776ab.svg)](https://python.org)
+[![macOS](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-black.svg)](https://github.com/depoledna/voice-command)
+
 VAD-driven streaming voice dictation for macOS (Apple Silicon). Speaks into your mic, text appears in a terminal buffer or gets typed directly into any app.
 
 All inference runs locally — Whisper for ASR, Silero for VAD, Qwen for tech-term correction. No cloud APIs.
