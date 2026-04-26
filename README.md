@@ -15,7 +15,7 @@ All inference runs locally — Whisper for ASR, Silero for VAD, Qwen for tech-te
 - macOS with Apple Silicon
 - Python 3.12+
 - Microphone access (System Settings > Privacy > Microphone)
-- Accessibility access for `--type` mode (System Settings > Privacy > Accessibility)
+- Accessibility access for `type` mode (System Settings > Privacy > Accessibility)
 
 ## Install
 
@@ -40,23 +40,43 @@ Models download automatically on first run (~300MB for Whisper + ~1GB for Qwen).
 ## Usage
 
 ```bash
-# Terminal buffer mode (TUI)
-voice-cmd
-
-# Type directly into the focused app
-voice-cmd --type
-
-# Transcribe a recording
-voice-cmd --file recording.m4a
-
-# List audio devices
-voice-cmd --list-devices
-
-# Use a specific device
-voice-cmd --device 1
+voice-cmd                # launch the TUI
+voice-cmd --version      # print version and exit
+voice-cmd --help         # usage
 ```
 
-When running from source, use `uv run python voice_cmd.py` instead of `voice-cmd`.
+The TUI launches in whichever mode (`buffer` or `type`) is set in `settings.json`. From source: `uv run python voice_cmd.py`.
+
+## Configuration
+
+Persistent settings live at `~/.config/voice-command/settings.json` (or `$XDG_CONFIG_HOME/voice-command/settings.json`). The file is auto-created with defaults on first launch.
+
+| Key                        | Default  | Description                                              |
+|----------------------------|----------|----------------------------------------------------------|
+| `device`                   | `null`   | Audio input device index. `null` → auto-detect           |
+| `llm_correction`           | `false`  | Run Qwen tech-term correction after ASR (downloads ~1GB) |
+| `vad_threshold`            | `0.45`   | VAD speech threshold (0.10–0.95)                         |
+| `min_silence_ms`           | `600`    | Silence (ms) required to end an utterance                |
+| `mode`                     | `buffer` | `buffer` (TUI) or `type` (keystrokes into focused app)   |
+| `inactivity_clear_seconds` | `5`      | Clear buffer after this idle time (both modes). `0` disables auto-clear |
+
+Disabling `llm_correction` skips loading the ~1GB Qwen model entirely.
+
+## Hotkeys
+
+The TUI shows a sticky 3-line header and accepts hotkeys at any time:
+
+| Key         | Action                                              |
+|-------------|-----------------------------------------------------|
+| `P` / Space | Pause / resume listening (live)                     |
+| `L`         | Toggle LLM tech-term correction (live)              |
+| `D`         | Pick audio device (live; mic is reattached on save) |
+| `V`         | Adjust VAD threshold (live)                         |
+| `S`         | Adjust min-silence (live)                           |
+| `?`         | Show help + voice commands                          |
+| `Q` / `^C`  | Quit                                                |
+
+All hotkey changes auto-save to `settings.json`.
 
 ## Voice Commands
 
@@ -73,7 +93,7 @@ When running from source, use `uv run python voice_cmd.py` instead of `voice-cmd
 | `start listening` | Resume |
 | `copy all` | Copy to clipboard |
 | `done` | Copy to clipboard and exit |
-| `show commands` | Show command list |
+| `show commands` | Show help overlay |
 
 Commands can appear inline with dictated text: "Send the email **period** **new line** Don't forget the attachment" produces two lines with proper punctuation.
 
@@ -82,13 +102,13 @@ Commands can appear inline with dictated text: "Send the email **period** **new 
 1. **Audio** - `sounddevice` captures mic input, resampled to 16kHz
 2. **VAD** - Silero VAD with hysteresis detects speech boundaries (32ms frames, pre-roll buffering)
 3. **ASR** - MLX Whisper (small, 8-bit) with dev-vocabulary prompt
-4. **LLM** - Qwen3 1.7B (4-bit) fixes tech terms: "fast api" -> "FastAPI", "type script" -> "TypeScript"
+4. **LLM** - Qwen3 1.7B (4-bit) fixes tech terms: "fast api" -> "FastAPI", "type script" -> "TypeScript" *(toggle off via `L` or `llm_correction: false`)*
 5. **Commands** - Sentence splitting + leading/trailing command extraction
 6. **Output** - TUI buffer display or keystroke diff-typing via pynput
 
 ## Type Mode
 
-`--type` mode sends keystrokes to the focused app. It detects when its own terminal is focused and skips typing to avoid feedback loops. A 3-second countdown lets you switch to the target app after launching.
+Set `mode: type` in `settings.json` (or press `M` then quit/relaunch). Keystrokes go to the focused app; the terminal is skipped to avoid feedback loops. A 3-second countdown lets you switch focus after launching.
 
 ## Benchmarks
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "voice-command"
-version = "0.1.0"
+version = "0.2.0"
 description = "VAD-driven streaming voice dictation for macOS with editing commands, tech-term correction, and keyboard output"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -47,8 +47,10 @@ Repository = "https://github.com/depoledna/voice-command"
 Issues = "https://github.com/depoledna/voice-command/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["."]
-include = ["voice_cmd.py"]
+packages = ["voice_command"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"voice_cmd.py" = "voice_cmd.py"
 
 [tool.hatch.build.targets.sdist]
-include = ["voice_cmd.py", "pyproject.toml", "README.md", "LICENSE"]
+include = ["voice_cmd.py", "voice_command/**/*.py", "pyproject.toml", "README.md", "LICENSE"]
