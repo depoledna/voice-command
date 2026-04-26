@@ -1,11 +1,10 @@
-"""Output sinks: BufferSink (TUI display) and TypeSink (keystrokes into focused app).
+"""Output sink: TypeSink — keystrokes into the focused app, with TUI mirror.
 
-The two modes share the same `OutputSink` protocol so the main loop never
-has to branch on settings.mode — it just calls sink.apply, sink.status, etc.
+Kept behind an `OutputSink` protocol so the main loop never has to know
+which sink it's holding (handy if a future no-type variant is added).
 
 Public API:
-    OutputSink   — protocol both sinks satisfy
-    BufferSink   — accumulates text in the TUI; auto-clears after idle
+    OutputSink   — protocol the sink satisfies
     TypeSink     — types each utterance into the focused app via pynput
 """
 
@@ -17,7 +16,7 @@ import sys
 import time
 from typing import Protocol
 
-from voice_command.text import TextBuffer, copy_to_clipboard, normalize_buffer_text
+from voice_command.text import TextBuffer, normalize_buffer_text
 from voice_command.tui import BOLD, GRAY, GREEN, RESET, YELLOW
 
 
@@ -55,45 +54,6 @@ class _IdleClear:
                 and time.monotonic() - self._last > self._timeout):
             return TextBuffer()
         return None
-
-
-# ---------------------------------------------------------------------------
-# BufferSink — text accumulates in the TUI buffer; auto-clears on idle
-# ---------------------------------------------------------------------------
-
-class BufferSink:
-    """Buffer-mode sink. The TUI renders `buf.text` directly; this sink only
-    tracks the inactivity timer and prints the final transcript at exit."""
-
-    def __init__(self, inactivity_clear_seconds: float) -> None:
-        self._idle = _IdleClear(inactivity_clear_seconds)
-
-    def before_start(self) -> None:
-        pass
-
-    def status(self, paused: bool, in_speech: bool) -> str:
-        if paused:
-            return f"{YELLOW}⏸ paused{RESET}"
-        if in_speech:
-            return f"{GREEN}● LISTENING{RESET}"
-        return f"{GRAY}○ ready{RESET}"
-
-    def apply(self, old_text: str, new_text: str) -> str | None:
-        # any utterance — even a no-op command — resets the idle timer
-        self._idle.touch()
-        return None
-
-    def maybe_auto_clear(self, buf: TextBuffer, in_speech: bool) -> TextBuffer | None:
-        return self._idle.maybe_clear(buf, in_speech)
-
-    def finalize(self, buf: TextBuffer) -> None:
-        print(f"{BOLD}Final ({buf.word_count} words):{RESET}")
-        if buf.text:
-            print(buf.text)
-            copy_to_clipboard(buf.text)
-            print(f"{GREEN}Copied to clipboard{RESET}")
-        else:
-            print(f"{GRAY}(empty){RESET}")
 
 
 # ---------------------------------------------------------------------------

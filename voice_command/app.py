@@ -8,12 +8,13 @@ the TUI, output nothing about settings — and `app.run` wires them together.
 from __future__ import annotations
 
 import sys
+import time
 from dataclasses import dataclass
 
 from voice_command import config
 from voice_command.audio import AudioSource, SpeechEnd
 from voice_command.config import Settings
-from voice_command.output import BufferSink, OutputSink, TypeSink
+from voice_command.output import OutputSink, TypeSink
 from voice_command.text import COMMANDS, TextBuffer, is_resume_command, process_utterance, warmup_llm
 from voice_command.tui import GRAY, GREEN, RED, RESET, Frame, Tui
 
@@ -101,6 +102,10 @@ def run(settings: Settings, sink: OutputSink, audio: AudioSource, tui: Tui) -> T
     buf = TextBuffer()
     paused = False
     message = ""
+    message_set_at = 0.0
+
+    def _set_message(text: str) -> tuple[str, float]:
+        return text, time.monotonic()
 
     tui.render(_frame(settings, audio, sink, buf, paused, message))
 
@@ -113,17 +118,17 @@ def run(settings: Settings, sink: OutputSink, audio: AudioSource, tui: Tui) -> T
             if cmd.toggle_paused:
                 paused = not paused
                 # status icon shows the paused state; only resume needs a hint
-                message = "" if paused else "▶ resumed"
+                message, message_set_at = _set_message("" if paused else "▶ resumed")
             if cmd.message:
-                message = cmd.message
+                message, message_set_at = _set_message(cmd.message)
 
         # 2. Reconcile audio with settings (handles D/V/S edits)
         if settings.device is not None and settings.device != audio.device_index:
             try:
                 new_name = audio.set_device(settings.device)
-                message = f"device → {new_name}"
+                message, message_set_at = _set_message(f"device → {new_name}")
             except Exception as e:
-                message = f"device open failed: {e}"
+                message, message_set_at = _set_message(f"device open failed: {e}")
                 settings.device = audio.device_index
         audio.set_vad(threshold=settings.vad_threshold, min_silence_ms=settings.min_silence_ms)
 
@@ -140,15 +145,16 @@ def run(settings: Settings, sink: OutputSink, audio: AudioSource, tui: Tui) -> T
                 # run_live/run_type behavior.
                 if is_resume_command(text):
                     paused = False
-                    message = "▶ resumed"
+                    message, message_set_at = _set_message("▶ resumed")
                 continue
             old_text = buf.text
             res = process_utterance(text, buf, llm_enabled=settings.llm_correction)
             buf = res.buffer
-            message = res.message
+            message, message_set_at = _set_message(res.message)
             addendum = sink.apply(old_text, buf.text)
             if addendum:
-                message = f"{message} ({addendum})"
+                joined = f"{message} ({addendum})" if message else addendum
+                message, message_set_at = _set_message(joined)
             if res.exit:
                 return buf
             if res.pause:
@@ -156,10 +162,14 @@ def run(settings: Settings, sink: OutputSink, audio: AudioSource, tui: Tui) -> T
             if res.show_help:
                 tui.show_help(COMMANDS)
 
-        # 4. Inactivity auto-clear (sink-specific)
+        # 4. Inactivity auto-clear (buffer body + status message, same timeout)
         cleared = sink.maybe_auto_clear(buf, audio.in_speech)
         if cleared is not None:
             buf = cleared
+        if (message
+                and settings.inactivity_clear_seconds > 0
+                and time.monotonic() - message_set_at > settings.inactivity_clear_seconds):
+            message = ""
 
         # 5. Render
         tui.render(_frame(settings, audio, sink, buf, paused, message))
@@ -191,11 +201,7 @@ def main() -> None:
         sys.exit(2)
 
     settings = config.load()
-    sink: OutputSink = (
-        BufferSink(settings.inactivity_clear_seconds)
-        if settings.mode == "buffer"
-        else TypeSink(settings.inactivity_clear_seconds)
-    )
+    sink: OutputSink = TypeSink(settings.inactivity_clear_seconds)
 
     print(f"{GRAY}Loading models...{RESET}")
     AudioSource.warmup()

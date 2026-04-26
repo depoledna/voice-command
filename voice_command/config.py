@@ -22,8 +22,7 @@ class Settings:
     llm_correction: bool = False
     vad_threshold: float = 0.45
     min_silence_ms: int = 600
-    mode: str = "buffer"   # "buffer" | "type"
-    inactivity_clear_seconds: float = 5.0   # 0 disables auto-clear
+    inactivity_clear_seconds: float = 5.0   # 0 disables auto-clear (buffer + status message)
 
 
 def path() -> Path:
@@ -45,7 +44,6 @@ def load() -> Settings:
             llm_correction=bool(data.get("llm_correction", defaults.llm_correction)),
             vad_threshold=float(data.get("vad_threshold", defaults.vad_threshold)),
             min_silence_ms=int(data.get("min_silence_ms", defaults.min_silence_ms)),
-            mode=str(data.get("mode", defaults.mode)),
             inactivity_clear_seconds=float(
                 data.get("inactivity_clear_seconds", defaults.inactivity_clear_seconds) or 0
             ),
@@ -63,6 +61,5 @@ def save(s: Settings) -> None:
         "llm_correction": s.llm_correction,
         "vad_threshold": s.vad_threshold,
         "min_silence_ms": s.min_silence_ms,
-        "mode": s.mode,
         "inactivity_clear_seconds": s.inactivity_clear_seconds,
     }, indent=2) + "\n")

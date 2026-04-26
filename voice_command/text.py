@@ -4,7 +4,7 @@ Public API:
     TextBuffer            — immutable word list with undo
     UtteranceResult       — outcome of processing one transcribed utterance
     process_utterance()   — the only entry point callers need
-    copy_to_clipboard()   — used by both voice commands and BufferSink.finalize
+    copy_to_clipboard()   — used by the "copy all" / "done" voice commands
 
 Hidden: command tables, contraction regex, sentence splitting, leading/
 trailing command extraction, LLM model lifecycle, the recursive piece parser.
@@ -436,9 +436,9 @@ def _process_single_piece(text: str, buf: TextBuffer) -> tuple[TextBuffer, list[
             msgs.append(cmd.message)
             return cmd.buffer, msgs, cmd
 
-    # no command — append as text
+    # no command — append as text. Buffer body already shows it; no message.
     buf = buf.append_text(text)
-    return buf, [f'+ "{text}"'], None
+    return buf, [], None
 
 
 # ---------------------------------------------------------------------------

@@ -45,7 +45,7 @@ voice-cmd --version      # print version and exit
 voice-cmd --help         # usage
 ```
 
-The TUI launches in whichever mode (`buffer` or `type`) is set in `settings.json`. From source: `uv run python voice_cmd.py`.
+Dictation always types into the focused window (the TUI itself is auto-skipped to avoid feedback loops). The TUI mirrors what was transcribed so you can see and verbally edit it. From source: `uv run python voice_cmd.py`.
 
 ## Configuration
 
@@ -57,8 +57,7 @@ Persistent settings live at `~/.config/voice-command/settings.json` (or `$XDG_CO
 | `llm_correction`           | `false`  | Run Qwen tech-term correction after ASR (downloads ~1GB) |
 | `vad_threshold`            | `0.45`   | VAD speech threshold (0.10–0.95)                         |
 | `min_silence_ms`           | `600`    | Silence (ms) required to end an utterance                |
-| `mode`                     | `buffer` | `buffer` (TUI) or `type` (keystrokes into focused app)   |
-| `inactivity_clear_seconds` | `5`      | Clear buffer after this idle time (both modes). `0` disables auto-clear |
+| `inactivity_clear_seconds` | `5`      | Clear the TUI buffer + status message after this idle time. `0` disables auto-clear |
 
 Disabling `llm_correction` skips loading the ~1GB Qwen model entirely.
 
@@ -106,9 +105,9 @@ Commands can appear inline with dictated text: "Send the email **period** **new 
 5. **Commands** - Sentence splitting + leading/trailing command extraction
 6. **Output** - TUI buffer display or keystroke diff-typing via pynput
 
-## Type Mode
+## Output
 
-Set `mode: type` in `settings.json` (or press `M` then quit/relaunch). Keystrokes go to the focused app; the terminal is skipped to avoid feedback loops. A 3-second countdown lets you switch focus after launching.
+Each utterance is typed into whichever app is currently focused via `pynput`. If your own terminal (the one running `voice-cmd`) is the frontmost window, typing is suppressed to avoid echoing into your shell. A 3-second countdown after launch lets you switch focus to the target app.
 
 ## Benchmarks
 

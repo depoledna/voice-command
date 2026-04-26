@@ -143,7 +143,6 @@ def _header(s: Settings, dev_name: str) -> list[str]:
     h1 = (
         f" {BOLD}voice-command{RESET}{sep}{short_dev}{sep}LLM:{llm}"
         f"{sep}VAD:{s.vad_threshold:.2f}/{s.min_silence_ms}ms"
-        f"{sep}mode:{CYAN}{s.mode}{RESET}"
     )
     h2 = f" {DIM}[P]ause  [L]LM  [D]evice  [V]AD  [S]ilence  [?]help  [Q]uit{RESET}"
     return [h1, h2, _hbar(cols)]
